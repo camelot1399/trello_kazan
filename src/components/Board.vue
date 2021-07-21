@@ -4,30 +4,23 @@
             class="board__list" 
             :data-board="list.name" 
             v-for="list in board" 
-            :key="list.name" 
-        >
+            :key="list.name">
             <div class="board__header">
                 <h3>{{ list.h3 }}</h3>
                 <button class="showMenuBoardButton" @click="list.popOver = !list.popOver">
                     <i class="fas fa-ellipsis-h"></i>
                 </button>
 
-                <div class="pop-over" v-if="list.popOver">
-                    <div class="pop__header">
-                        <h3>Действия со списком</h3>
-                        <button class="closePop" @click="list.popOver = false">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-
-                    <div class="pop__body">
-                        <ul>
-                            <li @click="popAddTask">Добавить задачу</li>
-                        </ul>
-                    </div>
-                </div>
+                <BoardPopOver 
+                    :list="list" 
+                    v-if="list.popOver"
+                    v-on:close="$event"
+                    v-on:addTask="popAddTask($event)"
+                />
+                
             </div>
             
+
             <button @click="popAddTask" class="addNewTaskButton">
                 <i class="fas fa-plus"></i> Добавить карточку
             </button>
@@ -35,42 +28,16 @@
             <div 
                 class="tasks" 
                 ondrop="drop_handler(event)" 
-                ondragover="dragover_handler(event)"
-            >
-                <div 
-                    @mouseover="task.showEdit = true" 
-                    @mouseleave="task.showEdit = false"
-                    draggable="true"
-                    class="taskWrapper"
+                ondragover="dragover_handler(event)">
+
+                <Task  
                     v-for="task in list.tasks" 
                     :key="task.hash"
                     :id="task.hash"
-                    >
-                    <textarea 
-                        name="text" 
-                        placeholder="Введите заголовок для этой задачи" 
-                        v-model="task.textarea">
-                    </textarea>
-                    <button class="taskEdit" v-if="task.showEdit" @click="task.popOver = !task.popOver">
-                        <i class="far fa-edit"></i>
-                    </button>
-
-                    <div class="pop-over" v-if="task.popOver">
-                        <div class="pop__header">
-                            <h3>Действия со списком</h3>
-                            <button class="closePop" @click="task.popOver = false">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-
-                        <div class="pop__body">
-                            <ul>
-                                <li @click="deleteTask(task.hash, list.name)">Удалить</li>
-                                <li>Переместить</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+                    :task="task"
+                    :list="list"
+                    v-on:deleteT="deleteTask($event)"
+                />
                 
             </div>
             
@@ -78,6 +45,9 @@
     </div>
 </template>
 <script>
+import BoardPopOver from './PopUp/BoardPopOver.vue';
+import Task from './Task.vue';
+
 export default {
     name: 'Board',
     data() {
@@ -88,6 +58,10 @@ export default {
                 {popOver: false, name: 'done', h3: 'Готово', tasks: []},
             ]
         }
+    },
+    components: {
+        BoardPopOver,
+        Task
     },
     methods: {
         showEdit(e) {
@@ -142,7 +116,7 @@ export default {
             }
             
         },
-        deleteTask(hash, boardName) {
+        deleteTask({hash, boardName}) {
             let filter = this.board.filter(el => el.name === boardName);
             let arr = this.removeItemFromArray(filter[0].tasks, hash);
             let index = filter[0].tasks.indexOf(arr[0]);
@@ -182,16 +156,14 @@ h3 {
 }
 
 .addNewTaskButton,
-.showMenuBoardButton,
-.closePop {
+.showMenuBoardButton {
     border: none;
     background: none;
     cursor: pointer;
 }
 
 .addNewTaskButton:hover,
-.showMenuBoardButton:hover,
-.closePop:hover {
+.showMenuBoardButton:hover {
     background: #ccc;
 }
 
@@ -206,50 +178,4 @@ textarea:active, :hover, :focus {
     outline: 0;
     outline-offset: 0;
 }
-
-.taskWrapper {
-    position: relative;
-    margin-top: 5px;
-}
-
-.taskEdit {
-    position: absolute;
-    top: 5px;
-    right: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-
-}
-
-.pop-over {
-    position: absolute;
-    top: 100%;
-    right: -100%;
-    background: white;
-    border: 1px solid #ccc;
-    z-index: 999;
-    /* display: none; */
-}
-.isShow {
-    display: block;
-}
-
-.pop__header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    padding: 5px;
-    border-bottom: 1px solid #ccc;
-}
-ul {
-    margin: 0;
-    padding: 0;
-}
-
-li {
-    list-style-type: none;
-}
-
-
 </style>
