@@ -22,15 +22,13 @@
 
                     <div class="pop__body">
                         <ul>
-                            <li 
-                                @click="popAddTask"
-                            >Добавить задачу</li>
+                            <li @click="popAddTask">Добавить задачу</li>
                         </ul>
                     </div>
                 </div>
             </div>
             
-            <button @click="list.tasks.push({hash: Date.now(),textarea: ''})" class="addNewTaskButton">
+            <button @click="popAddTask" class="addNewTaskButton">
                 <i class="fas fa-plus"></i> Добавить карточку
             </button>
             
@@ -40,25 +38,40 @@
                 ondragover="dragover_handler(event)"
             >
                 <div 
-                    v-for="task in list.tasks" 
-                    :key="task.hash" 
                     @mouseover="task.showEdit = true" 
                     @mouseleave="task.showEdit = false"
-                    @mousedown="tapDiv"
-                    @mouseup="dropDiv"
                     draggable="true"
+                    class="taskWrapper"
+                    v-for="task in list.tasks" 
+                    :key="task.hash"
                     :id="task.hash"
-                    class="taskWrapper" 
-                >
+                    >
                     <textarea 
                         name="text" 
                         placeholder="Введите заголовок для этой задачи" 
-                        v-model="task.textarea"
-                    ></textarea>
-                    <button class="taskEdit" v-if="task.showEdit">
-                        <i class="far fa-edit "></i>
+                        v-model="task.textarea">
+                    </textarea>
+                    <button class="taskEdit" v-if="task.showEdit" @click="task.popOver = !task.popOver">
+                        <i class="far fa-edit"></i>
                     </button>
+
+                    <div class="pop-over" v-if="task.popOver">
+                        <div class="pop__header">
+                            <h3>Действия со списком</h3>
+                            <button class="closePop" @click="task.popOver = false">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="pop__body">
+                            <ul>
+                                <li @click="deleteTask(task.hash, list.name)">Удалить</li>
+                                <li>Переместить</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
+                
             </div>
             
         </div>
@@ -70,9 +83,9 @@ export default {
     data() {
         return {
             board: [
-                {popOver: false, name: 'newTask', h3: 'Нужно сделать', tasks: [{showEdit: false, hash: 1, textarea: '123'}]},
-                {popOver: false, name: 'inProgress', h3: 'В процессе', tasks: [{showEdit: false, hash: 2, textarea: 'lfflf'}]},
-                {popOver: false, name: 'done', h3: 'Готово', tasks: [{showEdit: false, hash: 3, textarea: 'лалалаа'}]},
+                {popOver: false, name: 'newTask', h3: 'Нужно сделать', tasks: [{showEdit: false, popOver: false, hash: 1, textarea: '123'}]},
+                {popOver: false, name: 'inProgress', h3: 'В процессе', tasks: []},
+                {popOver: false, name: 'done', h3: 'Готово', tasks: []},
             ]
         }
     },
@@ -110,10 +123,7 @@ export default {
         initDND() {
             console.log('initDND');
             window.addEventListener('DOMContentLoaded', () => {
-                console.log('DOMContentLoaded');
-                // Найти элемент по id
                 const elements = document.querySelectorAll(".taskWrapper");
-                console.log(elements);
                 elements.forEach(element => {
                     // Добавить обработчик события `dragstart`
                     element.addEventListener("dragstart", this.dragstart_handler);
@@ -124,14 +134,29 @@ export default {
         popAddTask(e) {
             let board = this.board.filter(el => el.name === e.target.closest('.board__list').dataset.board);
             board[0].tasks.push({showEdit: false, hash: Date.now(), textarea: ''})
-            e.target.closest('.pop-over').querySelector('.closePop').click();
+            let parent = e.target.closest('.board__list');
+            let closePop = parent.querySelector('.closePop');
+            console.log(closePop);
+            if (closePop !== null) {
+                closePop.click();
+            }
+            
+        },
+        deleteTask(hash, boardName) {
+            let filter = this.board.filter(el => el.name === boardName);
+            let arr = this.removeItemFromArray(filter[0].tasks, hash);
+            let index = filter[0].tasks.indexOf(arr[0]);
+            filter[0].tasks.splice(index, 1);
+        },
+        removeItemFromArray(arr, value) {
+            return arr.filter(el => el.hash === value);
         }
     },
     mounted() {
-        console.log(Date.now());
-        setTimeout(() => {
-            this.initDND();
-        }, 2000);
+        // console.log(Date.now());
+        // setTimeout(() => {
+        //     this.initDND();
+        // }, 2000);
     }
 }
 </script>
