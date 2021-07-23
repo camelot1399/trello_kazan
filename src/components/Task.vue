@@ -4,6 +4,7 @@
         @mouseleave="task.showEdit = false"
         draggable="true"
         class="taskWrapper"
+        ondragstart="event.dataTransfer.setData('text/plain',null)"
         >
         <textarea 
             name="text" 
