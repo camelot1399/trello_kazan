@@ -1,10 +1,6 @@
 <template>
     <div id="board">
-        <div 
-            class="board__list" 
-            :data-board="list.name" 
-            v-for="list in board" 
-            :key="list.name">
+        <div class="board__list dropzone" :data-board="list.name" v-for="list in board" :key="list.name">
             <div class="board__header">
                 <h3>{{ list.h3 }}</h3>
                 <button class="showMenuBoardButton" @click="list.popOver = !list.popOver">
@@ -14,22 +10,16 @@
                 <BoardPopOver 
                     :list="list" 
                     v-if="list.popOver"
-                    v-on:close="$event"
-                    v-on:addTask="popAddTask($event)"
+                    v-on:close="list.popOver = !list.popOver"
+                    v-on:addTask="popAddTask"
                 />
-                
             </div>
             
-
             <button @click="popAddTask" class="addNewTaskButton">
                 <i class="fas fa-plus"></i> Добавить карточку
             </button>
             
-            <div 
-                class="tasks" 
-                ondrop="drop_handler(event)" 
-                ondragover="dragover_handler(event)">
-
+            <div class="tasks" >
                 <Task  
                     v-for="task in list.tasks" 
                     :key="task.hash"
@@ -38,7 +28,6 @@
                     :list="list"
                     v-on:deleteT="deleteTask($event)"
                 />
-                
             </div>
             
         </div>
@@ -56,7 +45,8 @@ export default {
                 {popOver: false, name: 'newTask', h3: 'Нужно сделать', tasks: [{showEdit: false, popOver: false, hash: 1, textarea: '123'}]},
                 {popOver: false, name: 'inProgress', h3: 'В процессе', tasks: []},
                 {popOver: false, name: 'done', h3: 'Готово', tasks: []},
-            ]
+            ],
+            dragged: null,
         }
     },
     components: {
@@ -64,46 +54,57 @@ export default {
         Task
     },
     methods: {
-        showEdit(e) {
-            console.log('mouseover');
-            console.log(e);
-        },
-        tapDiv(e) {
-            console.log('tap');
-            console.log(e);
-        },
-        dropDiv(e) {
-            console.log('drop');
-            console.log(e);
-        },
-        dragover_handler(ev) {
-            ev.preventDefault();
-            ev.dataTransfer.dropEffect = "move";
-        },
-        drop_handler(ev) {
-            ev.preventDefault();
-            const data = ev.dataTransfer.getData("text/plain");
-            ev.target.appendChild(document.getElementById(data));
-        },
-        dragstart_handler(ev) {
-            console.log('dragstart_handler');
-
-            ev.dataTransfer.setData("text/plain", ev.target.id);
-            ev.dataTransfer.setData("text/plain", ev.target.innerText);
-            ev.dataTransfer.setData("text/html", ev.target.outerHTML);
-
-            ev.dataTransfer.dropEffect = "move";    
-        },
         initDND() {
-            console.log('initDND');
-            window.addEventListener('DOMContentLoaded', () => {
-                const elements = document.querySelectorAll(".taskWrapper");
-                elements.forEach(element => {
-                    // Добавить обработчик события `dragstart`
-                    element.addEventListener("dragstart", this.dragstart_handler);
-                })
-                
-            });
+            document.addEventListener("drag", function(event) {
+                // console.log(event);
+            }, false);  
+            document.addEventListener("dragstart", function(event) {
+            // store a ref. on the this.dragged elem
+            this.dragged = event.target;
+            // make it half transparent
+            event.target.style.opacity = .5;
+            }, false);
+
+            document.addEventListener("dragend", function(event) {
+            // reset the transparency
+            event.target.style.opacity = "";
+            }, false);
+
+            /* events fired on the drop targets */
+            document.addEventListener("dragover", function(event) {
+            // prevent default to allow drop
+            event.preventDefault();
+            }, false);
+            document.addEventListener("dragenter", function(event) {
+            // highlight potential drop target when the draggable element enters it
+            if (event.target.classList.contains('dropzone')) {
+                event.target.style.background = "purple";
+            }
+
+            }, false);
+
+            document.addEventListener("dragleave", function(event) {
+            // reset background of potential drop target when the draggable element leaves it
+            if (event.target.classList.contains('dropzone')) {
+                event.target.style.background = "";
+            }
+
+            }, false);
+
+            document.addEventListener("drop", function(event) {
+            // prevent default action (open as link for some elements)
+                event.preventDefault();
+                // move this.dragged elem to the selected drop target
+                console.log('сброс груза');
+
+                if (!event.target.classList.contains('dropzone')) {
+                    return
+                }
+
+                event.target.style.background = "";
+                this.dragged.parentNode.removeChild( this.dragged );
+                event.target.appendChild( this.dragged );
+            }, false);
         },
         popAddTask(e) {
             let board = this.board.filter(el => el.name === e.target.closest('.board__list').dataset.board);
@@ -128,9 +129,9 @@ export default {
     },
     mounted() {
         // console.log(Date.now());
-        // setTimeout(() => {
-        //     this.initDND();
-        // }, 2000);
+        setTimeout(() => {
+            this.initDND();
+        }, 2000);
     }
 }
 </script>

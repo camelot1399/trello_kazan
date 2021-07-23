@@ -2,7 +2,7 @@
     <div class="pop-over">
         <div class="pop__header">
             <h3>Действия со списком</h3>
-            <button class="closePop" @click="$emit('close', list.popOver = false)">
+            <button class="closePop" @click="$emit('close')">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -22,9 +22,7 @@ export default {
 
         }
     },
-    props: {
-        list: Array
-    }
+    props: ['list'],
 }
 </script>
 <style>
